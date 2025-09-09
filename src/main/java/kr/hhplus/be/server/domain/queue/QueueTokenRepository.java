@@ -7,6 +7,7 @@ public interface QueueTokenRepository {
     QueueToken save(QueueToken token);
     void saveAll(List<QueueToken> tokens);
     Optional<QueueToken> findByToken(String token);
+    Optional<QueueToken> findActiveByUserId(String userId);
     Long countWaitingTokens();
     Long countActiveTokens();
     List<QueueToken> getWaitingTokensToActivate(int limit);

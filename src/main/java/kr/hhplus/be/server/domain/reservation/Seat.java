@@ -15,10 +15,9 @@ public class Seat {
     private SeatStatus status;
     private String reservedBy;
     private LocalDateTime reservedAt;
-    private LocalDateTime expiresAt;
 
     public static Seat create(Long concertScheduleId, int seatNumber, int price) {
-        return new Seat(null, concertScheduleId, seatNumber, price, SeatStatus.AVAILABLE, null, null, null);
+        return new Seat(null, concertScheduleId, seatNumber, price, SeatStatus.AVAILABLE, null, null);
     }
 
     public void reserve(String userId) {
@@ -29,18 +28,15 @@ public class Seat {
         this.status = SeatStatus.TEMPORARILY_RESERVED;
         this.reservedBy = userId;
         this.reservedAt = LocalDateTime.now();
-        this.expiresAt = LocalDateTime.now().plusMinutes(5);
     }
 
     public void confirm() {
         this.status = SeatStatus.CONFIRMED;
     }
 
-
-    public boolean isExpired() {
-        if (expiresAt == null) {
-            return false;
-        }
-        return LocalDateTime.now().isAfter(expiresAt);
+    public void release() {
+        this.status = SeatStatus.AVAILABLE;
+        this.reservedBy = null;
+        this.reservedAt = null;
     }
 }

@@ -35,8 +35,7 @@ class SeatTest {
 
         assertThat(seat.getStatus()).isEqualTo(SeatStatus.TEMPORARILY_RESERVED);
         assertThat(seat.getReservedBy()).isEqualTo(userId);
-        assertThat(seat.getReservedAt()).isNotNull();
-        assertThat(seat.getExpiresAt()).isAfter(LocalDateTime.now());
+        assertThat(seat.getReservedAt()).isBeforeOrEqualTo(LocalDateTime.now());
     }
 
     @Test
@@ -59,6 +58,19 @@ class SeatTest {
         seat.confirm();
 
         assertThat(seat.getStatus()).isEqualTo(SeatStatus.CONFIRMED);
+    }
+
+    @Test
+    @DisplayName("임시 예약된 좌석을 해제할 수 있다")
+    void releaseSeat() {
+        Seat seat = Seat.create(1L, 1, 50000);
+        seat.reserve("user123");
+
+        seat.release();
+
+        assertThat(seat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+        assertThat(seat.getReservedBy()).isNull();
+        assertThat(seat.getReservedAt()).isNull();
     }
 
 }

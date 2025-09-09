@@ -2,6 +2,8 @@ package kr.hhplus.be.server.application.usecase.payment;
 
 import kr.hhplus.be.server.application.dto.PaymentResult;
 import kr.hhplus.be.server.domain.payment.*;
+import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
+import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
 import kr.hhplus.be.server.domain.user.*;
 import org.springframework.stereotype.Service;
@@ -12,20 +14,36 @@ public class PaymentUseCase {
     private final ReservationRepository reservationRepository;
     private final UserBalanceRepository userBalanceRepository;
     private final SeatRepository seatRepository;
+    private final QueueTokenRepository queueTokenRepository;
 
     public PaymentUseCase(PaymentRepository paymentRepository, 
                          ReservationRepository reservationRepository,
                          UserBalanceRepository userBalanceRepository,
-                         SeatRepository seatRepository) {
+                         SeatRepository seatRepository,
+                         QueueTokenRepository queueTokenRepository) {
         this.paymentRepository = paymentRepository;
         this.reservationRepository = reservationRepository;
         this.userBalanceRepository = userBalanceRepository;
         this.seatRepository = seatRepository;
+        this.queueTokenRepository = queueTokenRepository;
     }
 
     public PaymentResult pay(String userId, Long reservationId) {
+        QueueToken queueToken = queueTokenRepository.findActiveByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("활성화된 대기열 토큰이 없습니다."));
+
+        if (queueToken.isExpired()) {
+            queueToken.expire();
+            queueTokenRepository.save(queueToken);
+            throw new IllegalStateException("대기열 토큰이 만료되었습니다.");
+        }
+
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예약입니다."));
+
+        if (!reservation.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("예약자와 결제자가 일치하지 않습니다.");
+        }
 
         UserBalance userBalance = userBalanceRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 잔액 정보를 찾을 수 없습니다."));

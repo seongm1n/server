@@ -14,22 +14,18 @@ public class Reservation {
     private int price;
     private ReservationStatus status;
     private LocalDateTime createdAt;
-    private LocalDateTime expiresAt;
 
     public static Reservation create(String userId, Long seatId, int price) {
         LocalDateTime now = LocalDateTime.now();
         return new Reservation(null, userId, seatId, price, 
-                              ReservationStatus.PENDING, now, now.plusMinutes(5));
+                              ReservationStatus.PENDING, now);
     }
 
     public void confirm() {
         this.status = ReservationStatus.CONFIRMED;
     }
 
-    public boolean isExpired() {
-        if (status == ReservationStatus.CONFIRMED) {
-            return false;
-        }
-        return LocalDateTime.now().isAfter(expiresAt);
+    public void cancel() {
+        this.status = ReservationStatus.CANCELLED;
     }
 }

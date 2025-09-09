@@ -37,4 +37,8 @@ public class QueueToken {
         }
         return LocalDateTime.now().isAfter(expiresAt);
     }
+
+    public void expire() {
+        this.status = QueueStatus.EXPIRED;
+    }
 }

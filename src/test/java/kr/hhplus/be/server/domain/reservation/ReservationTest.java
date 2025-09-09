@@ -23,7 +23,7 @@ class ReservationTest {
         assertThat(reservation.getSeatId()).isEqualTo(seatId);
         assertThat(reservation.getPrice()).isEqualTo(price);
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
-        assertThat(reservation.getExpiresAt()).isAfter(LocalDateTime.now());
+        assertThat(reservation.getCreatedAt()).isBeforeOrEqualTo(LocalDateTime.now());
     }
 
     @Test
@@ -37,13 +37,13 @@ class ReservationTest {
     }
 
     @Test
-    @DisplayName("예약이 만료되었는지 확인할 수 있다")
-    void isExpired() {
-        LocalDateTime pastTime = LocalDateTime.now().minusMinutes(1);
-        Reservation reservation = new Reservation(1L, "user123", 1L, 50000,
-                ReservationStatus.PENDING, LocalDateTime.now(), pastTime);
+    @DisplayName("예약을 취소할 수 있다")
+    void cancelReservation() {
+        Reservation reservation = Reservation.create("user123", 1L, 50000);
 
-        assertThat(reservation.isExpired()).isTrue();
+        reservation.cancel();
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
     }
 
 }
