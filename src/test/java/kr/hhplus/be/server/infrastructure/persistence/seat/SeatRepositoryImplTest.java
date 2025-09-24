@@ -2,6 +2,8 @@ package kr.hhplus.be.server.infrastructure.persistence.seat;
 
 import kr.hhplus.be.server.domain.reservation.Seat;
 import kr.hhplus.be.server.domain.reservation.SeatStatus;
+import kr.hhplus.be.server.infrastructure.persistence.seat.SeatJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -15,15 +17,21 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(SeatRepositoryImpl.class)
 @ActiveProfiles("test")
-class SeatRepositoryImplTest {
+class SeatRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig {
 
     @Autowired
+    private SeatJpaRepository jpaRepository;
+    
     private SeatRepositoryImpl repository;
     
     @Autowired
     private TestEntityManager entityManager;
+
+    @BeforeEach
+    void setUp() {
+        repository = new SeatRepositoryImpl(jpaRepository);
+    }
 
     @Test
     void 좌석_ID로_조회() {

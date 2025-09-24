@@ -3,6 +3,8 @@ package kr.hhplus.be.server.infrastructure.persistence.queue;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
+import kr.hhplus.be.server.infrastructure.persistence.queue.QueueTokenJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -15,12 +17,18 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import({QueueTokenRepositoryImpl.class})
 @ActiveProfiles("test")
-class QueueTokenRepositoryImplTest {
+class QueueTokenRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig {
 
     @Autowired
-    private QueueTokenRepository repository;
+    private QueueTokenJpaRepository jpaRepository;
+    
+    private QueueTokenRepositoryImpl repository;
+
+    @BeforeEach
+    void setUp() {
+        repository = new QueueTokenRepositoryImpl(jpaRepository);
+    }
 
     @Test
     void 대기열_토큰_저장_조회() {

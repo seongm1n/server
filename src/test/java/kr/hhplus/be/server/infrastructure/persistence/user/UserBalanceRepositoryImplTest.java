@@ -2,6 +2,8 @@ package kr.hhplus.be.server.infrastructure.persistence.user;
 
 import kr.hhplus.be.server.domain.user.UserBalance;
 import kr.hhplus.be.server.infrastructure.persistence.user.UserBalanceRepositoryImpl;
+import kr.hhplus.be.server.infrastructure.persistence.user.UserBalanceJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -13,12 +15,18 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(UserBalanceRepositoryImpl.class)
 @ActiveProfiles("test")
-class UserBalanceRepositoryImplTest {
+class UserBalanceRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig {
 
     @Autowired
+    private UserBalanceJpaRepository jpaRepository;
+    
     private UserBalanceRepositoryImpl repository;
+
+    @BeforeEach
+    void setUp() {
+        repository = new UserBalanceRepositoryImpl(jpaRepository);
+    }
 
     @Test
     void 사용자_잔액_저장_조회() {

@@ -2,6 +2,8 @@ package kr.hhplus.be.server.infrastructure.persistence.payment;
 
 import kr.hhplus.be.server.domain.payment.Payment;
 import kr.hhplus.be.server.domain.payment.PaymentStatus;
+import kr.hhplus.be.server.infrastructure.persistence.payment.PaymentJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -12,15 +14,21 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(PaymentRepositoryImpl.class)
 @ActiveProfiles("test")
-class PaymentRepositoryImplTest {
+class PaymentRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig {
 
     @Autowired
+    private PaymentJpaRepository jpaRepository;
+    
     private PaymentRepositoryImpl repository;
     
     @Autowired
     private TestEntityManager entityManager;
+
+    @BeforeEach
+    void setUp() {
+        repository = new PaymentRepositoryImpl(jpaRepository);
+    }
 
     @Test
     void 결제_생성_저장() {
