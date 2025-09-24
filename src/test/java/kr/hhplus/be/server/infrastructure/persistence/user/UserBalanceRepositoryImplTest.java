@@ -1,8 +1,7 @@
 package kr.hhplus.be.server.infrastructure.persistence.user;
 
 import kr.hhplus.be.server.domain.user.UserBalance;
-import kr.hhplus.be.server.infrastructure.persistence.UserBalanceJpaRepository;
-import kr.hhplus.be.server.infrastructure.persistence.UserBalanceRepositoryImpl;
+import kr.hhplus.be.server.infrastructure.persistence.user.UserBalanceRepositoryImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

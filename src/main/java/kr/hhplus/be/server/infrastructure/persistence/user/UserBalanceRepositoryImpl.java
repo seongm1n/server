@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.infrastructure.persistence;
+package kr.hhplus.be.server.infrastructure.persistence.user;
 
 import kr.hhplus.be.server.domain.user.UserBalance;
 import kr.hhplus.be.server.domain.user.UserBalanceRepository;
