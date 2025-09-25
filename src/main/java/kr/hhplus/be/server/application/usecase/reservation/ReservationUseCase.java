@@ -4,6 +4,9 @@ import kr.hhplus.be.server.application.dto.ReservationResult;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import org.springframework.stereotype.Service;
 
 @Service

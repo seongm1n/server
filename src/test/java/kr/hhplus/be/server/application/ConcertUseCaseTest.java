@@ -2,7 +2,8 @@ package kr.hhplus.be.server.application;
 
 import kr.hhplus.be.server.application.usecase.concert.ConcertUseCase;
 import kr.hhplus.be.server.domain.concert.*;
-import kr.hhplus.be.server.domain.reservation.*;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class ConcertUseCaseTest {
             Seat.create(concertScheduleId, 10, 50000)
         );
         
-        when(seatRepository.findAvailableSeatsByScheduleId(concertScheduleId))
+        when(seatRepository.findAvailableSeatsByConcertScheduleId(concertScheduleId))
             .thenReturn(availableSeats);
 
         List<Integer> seatNumbers = concertUseCase.getAvailableSeats(concertScheduleId);

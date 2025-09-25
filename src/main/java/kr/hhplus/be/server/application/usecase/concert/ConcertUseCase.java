@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.application.usecase.concert;
 
 import kr.hhplus.be.server.domain.concert.ConcertRepository;
-import kr.hhplus.be.server.domain.reservation.SeatRepository;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,7 +22,7 @@ public class ConcertUseCase {
     }
 
     public List<Integer> getAvailableSeats(Long concertScheduleId) {
-        return seatRepository.findAvailableSeatsByScheduleId(concertScheduleId)
+        return seatRepository.findAvailableSeatsByConcertScheduleId(concertScheduleId)
                 .stream()
                 .map(seat -> seat.getSeatNumber())
                 .toList();

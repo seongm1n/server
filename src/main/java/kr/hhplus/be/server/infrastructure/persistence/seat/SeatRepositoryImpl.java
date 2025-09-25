@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
-import kr.hhplus.be.server.domain.reservation.Seat;
-import kr.hhplus.be.server.domain.reservation.SeatRepository;
-import kr.hhplus.be.server.domain.reservation.SeatStatus;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -38,8 +38,8 @@ public class SeatRepositoryImpl implements SeatRepository {
     }
     
     @Override
-    public List<Seat> findAvailableSeatsByScheduleId(Long scheduleId) {
-        return jpaRepository.findByConcertScheduleIdAndStatus(scheduleId, SeatStatus.AVAILABLE)
+    public List<Seat> findAvailableSeatsByConcertScheduleId(Long concertScheduleId) {
+        return jpaRepository.findByConcertScheduleIdAndStatus(concertScheduleId, SeatStatus.AVAILABLE)
                 .stream()
                 .map(SeatEntity::toDomain)
                 .collect(Collectors.toList());

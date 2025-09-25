@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
-import kr.hhplus.be.server.domain.reservation.Seat;
-import kr.hhplus.be.server.domain.reservation.SeatStatus;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import kr.hhplus.be.server.infrastructure.persistence.seat.SeatJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,7 +89,7 @@ class SeatRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persiste
         saved3.reserve("user1");
         repository.save(saved3);
 
-        List<Seat> availableSeats = repository.findAvailableSeatsByScheduleId(scheduleId1);
+        List<Seat> availableSeats = repository.findAvailableSeatsByConcertScheduleId(scheduleId1);
 
         assertThat(availableSeats).hasSize(2);
         assertThat(availableSeats)
@@ -110,8 +110,8 @@ class SeatRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persiste
         repository.save(seat1);
         repository.save(seat2);
 
-        List<Seat> schedule1Seats = repository.findAvailableSeatsByScheduleId(scheduleId1);
-        List<Seat> schedule2Seats = repository.findAvailableSeatsByScheduleId(scheduleId2);
+        List<Seat> schedule1Seats = repository.findAvailableSeatsByConcertScheduleId(scheduleId1);
+        List<Seat> schedule2Seats = repository.findAvailableSeatsByConcertScheduleId(scheduleId2);
 
         assertThat(schedule1Seats).hasSize(1);
         assertThat(schedule1Seats.get(0).getConcertScheduleId()).isEqualTo(scheduleId1);
@@ -135,7 +135,7 @@ class SeatRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persiste
         repository.save(saved1);
         repository.save(saved2);
 
-        List<Seat> availableSeats = repository.findAvailableSeatsByScheduleId(scheduleId);
+        List<Seat> availableSeats = repository.findAvailableSeatsByConcertScheduleId(scheduleId);
 
         assertThat(availableSeats).isEmpty();
     }

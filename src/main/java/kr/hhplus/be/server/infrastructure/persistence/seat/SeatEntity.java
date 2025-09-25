@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.infrastructure.persistence.seat;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.reservation.Seat;
-import kr.hhplus.be.server.domain.reservation.SeatStatus;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

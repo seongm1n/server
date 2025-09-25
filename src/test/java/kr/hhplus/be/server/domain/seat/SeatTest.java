@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.domain.reservation;
+package kr.hhplus.be.server.domain.seat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,5 +72,4 @@ class SeatTest {
         assertThat(seat.getReservedBy()).isNull();
         assertThat(seat.getReservedAt()).isNull();
     }
-
 }
