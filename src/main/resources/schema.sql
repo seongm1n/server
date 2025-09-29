@@ -24,27 +24,7 @@ CREATE TABLE queue_token (
     INDEX idx_status_position (status, position_num)
 );
 
--- 콘서트 테이블
-CREATE TABLE concert (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 콘서트 스케줄 테이블
-CREATE TABLE concert_schedule (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    concert_id BIGINT NOT NULL,
-    concert_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    total_seats INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (concert_id) REFERENCES concert(id),
-    INDEX idx_concert_date (concert_date)
-);
-
--- 좌석 테이블
+-- 좌석 테이블 (concert_schedule_id는 외래키 제약 없이 단순 참조)
 CREATE TABLE seat (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     concert_schedule_id BIGINT NOT NULL,
@@ -53,7 +33,6 @@ CREATE TABLE seat (
     status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
     reserved_by VARCHAR(255) NULL,
     reserved_at TIMESTAMP NULL,
-    FOREIGN KEY (concert_schedule_id) REFERENCES concert_schedule(id),
     UNIQUE KEY uk_schedule_seat (concert_schedule_id, seat_number),
     INDEX idx_status (status),
     INDEX idx_reserved_by (reserved_by)
@@ -64,13 +43,12 @@ CREATE TABLE reservation (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     seat_id BIGINT NOT NULL,
+    price INT NOT NULL,
     status VARCHAR(20) NOT NULL,
-    reserved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (seat_id) REFERENCES seat(id),
     INDEX idx_user_id (user_id),
-    INDEX idx_status (status),
-    INDEX idx_expires_at (expires_at)
+    INDEX idx_status (status)
 );
 
 -- 결제 테이블

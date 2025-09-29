@@ -57,148 +57,20 @@ class SeatUseCaseTest {
     }
 
     @Test
-    @DisplayName("특정 좌석을 조회할 수 있다")
-    void getSeat() {
-        Long seatId = 1L;
-        Seat seat = new Seat(seatId, 1L, 1, 50000, SeatStatus.AVAILABLE, null, null);
+    @DisplayName("만료된 임시 예약을 해제할 수 있다")
+    void expireTemporaryReservations() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(5);
+        List<Seat> expiredSeats = List.of(
+            new Seat(1L, 1L, 1, 50000, SeatStatus.TEMPORARILY_RESERVED, "user123", expirationTime.minusMinutes(1)),
+            new Seat(2L, 1L, 2, 50000, SeatStatus.TEMPORARILY_RESERVED, "user456", expirationTime.minusMinutes(2))
+        );
 
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
+        when(seatRepository.findExpiredTemporaryReservations(any(LocalDateTime.class)))
+            .thenReturn(expiredSeats);
 
-        SeatResult result = seatUseCase.getSeat(seatId);
+        seatUseCase.expireTemporaryReservations();
 
-        assertThat(result.getId()).isEqualTo(seatId);
-        assertThat(result.getSeatNumber()).isEqualTo(1);
-        assertThat(result.getPrice()).isEqualTo(50000);
-        assertThat(result.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 좌석 조회 시 예외가 발생한다")
-    void getSeatNotFound() {
-        Long seatId = 999L;
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> seatUseCase.getSeat(seatId))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("좌석을 찾을 수 없습니다.");
-    }
-
-    @Test
-    @DisplayName("좌석을 예약할 수 있다")
-    void reserveSeat() {
-        Long seatId = 1L;
-        String userId = "user123";
-        Seat seat = new Seat(seatId, 1L, 1, 50000, SeatStatus.AVAILABLE, null, null);
-        
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-        when(seatRepository.save(any(Seat.class))).thenAnswer(invocation -> {
-            Seat savedSeat = invocation.getArgument(0);
-            return new Seat(savedSeat.getId(), savedSeat.getConcertScheduleId(), 
-                          savedSeat.getSeatNumber(), savedSeat.getPrice(), 
-                          savedSeat.getStatus(), savedSeat.getReservedBy(), 
-                          savedSeat.getReservedAt());
-        });
-
-        SeatResult result = seatUseCase.reserveSeat(seatId, userId);
-
-        assertThat(result.getStatus()).isEqualTo(SeatStatus.TEMPORARILY_RESERVED);
-        assertThat(result.getReservedBy()).isEqualTo(userId);
-        assertThat(result.getReservedAt()).isNotNull();
-        
-        verify(seatRepository).save(any(Seat.class));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 좌석 예약 시 예외가 발생한다")
-    void reserveSeatNotFound() {
-        Long seatId = 999L;
-        String userId = "user123";
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> seatUseCase.reserveSeat(seatId, userId))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("좌석을 찾을 수 없습니다.");
-            
-        verify(seatRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("좌석 예약을 확정할 수 있다")
-    void confirmSeat() {
-        Long seatId = 1L;
-        String userId = "user123";
-        Seat seat = new Seat(seatId, 1L, 1, 50000, SeatStatus.TEMPORARILY_RESERVED, 
-                           userId, LocalDateTime.now());
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-        when(seatRepository.save(any(Seat.class))).thenAnswer(invocation -> {
-            Seat savedSeat = invocation.getArgument(0);
-            return new Seat(savedSeat.getId(), savedSeat.getConcertScheduleId(), 
-                          savedSeat.getSeatNumber(), savedSeat.getPrice(), 
-                          SeatStatus.CONFIRMED, savedSeat.getReservedBy(), 
-                          savedSeat.getReservedAt());
-        });
-
-        SeatResult result = seatUseCase.confirmSeat(seatId);
-
-        assertThat(result.getStatus()).isEqualTo(SeatStatus.CONFIRMED);
-        assertThat(result.getReservedBy()).isEqualTo(userId);
-        
-        verify(seatRepository).save(any(Seat.class));
-    }
-
-    @Test
-    @DisplayName("좌석 예약을 해제할 수 있다")
-    void releaseSeat() {
-        Long seatId = 1L;
-        String userId = "user123";
-        Seat seat = new Seat(seatId, 1L, 1, 50000, SeatStatus.TEMPORARILY_RESERVED, 
-                           userId, LocalDateTime.now());
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-        when(seatRepository.save(any(Seat.class))).thenAnswer(invocation -> {
-            Seat savedSeat = invocation.getArgument(0);
-            return new Seat(savedSeat.getId(), savedSeat.getConcertScheduleId(), 
-                          savedSeat.getSeatNumber(), savedSeat.getPrice(), 
-                          SeatStatus.AVAILABLE, null, null);
-        });
-
-        SeatResult result = seatUseCase.releaseSeat(seatId);
-
-        assertThat(result.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
-        assertThat(result.getReservedBy()).isNull();
-        assertThat(result.getReservedAt()).isNull();
-        
-        verify(seatRepository).save(any(Seat.class));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 좌석 확정 시 예외가 발생한다")
-    void confirmSeatNotFound() {
-        Long seatId = 999L;
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> seatUseCase.confirmSeat(seatId))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("좌석을 찾을 수 없습니다.");
-            
-        verify(seatRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 좌석 해제 시 예외가 발생한다")
-    void releaseSeatNotFound() {
-        Long seatId = 999L;
-
-        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> seatUseCase.releaseSeat(seatId))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("좌석을 찾을 수 없습니다.");
-            
-        verify(seatRepository, never()).save(any());
+        verify(seatRepository).findExpiredTemporaryReservations(any(LocalDateTime.class));
+        verify(seatRepository, times(2)).save(any(Seat.class));
     }
 }

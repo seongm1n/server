@@ -1,3 +1,4 @@
 package kr.hhplus.be.server.api.dto;
 
-public record TokenRequest(String userId) {}
+public record TokenRequest(String userId) {
+}

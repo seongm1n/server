@@ -82,7 +82,7 @@ class PaymentUseCaseTest {
         PaymentResult result = paymentUseCase.pay(userId, reservationId);
 
         assertThat(result.getPaymentId()).isEqualTo(1L);
-        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
         
         verify(userBalanceRepository).save(userBalance);
         verify(reservationRepository).save(reservation);

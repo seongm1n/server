@@ -68,4 +68,8 @@ public class PaymentUseCase {
 
         return new PaymentResult(savedPayment.getId(), savedPayment.getStatus().name());
     }
+    
+    public PaymentResult processPayment(String userId, Long reservationId) {
+        return pay(userId, reservationId);
+    }
 }

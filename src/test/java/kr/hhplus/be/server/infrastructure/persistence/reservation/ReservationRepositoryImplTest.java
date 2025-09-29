@@ -99,25 +99,7 @@ class ReservationRepositoryImplTest extends kr.hhplus.be.server.infrastructure.p
     
     private Long createSeat() {
         entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO concert (name) VALUES ('테스트 콘서트')")
-                .executeUpdate();
-        
-        Long concertId = (Long) entityManager.getEntityManager()
-                .createNativeQuery("SELECT LAST_INSERT_ID()")
-                .getSingleResult();
-        
-        entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO concert_schedule (concert_id, concert_date, start_time, end_time, total_seats) VALUES (?, '2024-03-01', '19:00:00', '21:00:00', 50)")
-                .setParameter(1, concertId)
-                .executeUpdate();
-        
-        Long scheduleId = (Long) entityManager.getEntityManager()
-                .createNativeQuery("SELECT LAST_INSERT_ID()")
-                .getSingleResult();
-        
-        entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO seat (concert_schedule_id, seat_number, price, status) VALUES (?, 1, 50000, 'AVAILABLE')")
-                .setParameter(1, scheduleId)
+                .createNativeQuery("INSERT INTO seat (concert_schedule_id, seat_number, price, status) VALUES (1, 1, 50000, 'AVAILABLE')")
                 .executeUpdate();
         
         entityManager.flush();

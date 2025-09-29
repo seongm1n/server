@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,40 +25,16 @@ public class SeatUseCase {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public SeatResult getSeat(Long seatId) {
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("좌석을 찾을 수 없습니다."));
-        return SeatResult.from(seat);
-    }
-
+    // 이 메서드들은 ReservationUseCase와 PaymentUseCase에서 직접 처리함
+    
     @Transactional
-    public SeatResult reserveSeat(Long seatId, String userId) {
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("좌석을 찾을 수 없습니다."));
+    public void expireTemporaryReservations() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(5);
+        List<Seat> expiredSeats = seatRepository.findExpiredTemporaryReservations(expirationTime);
         
-        seat.reserve(userId);
-        Seat savedSeat = seatRepository.save(seat);
-        return SeatResult.from(savedSeat);
-    }
-
-    @Transactional
-    public SeatResult confirmSeat(Long seatId) {
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("좌석을 찾을 수 없습니다."));
-        
-        seat.confirm();
-        Seat savedSeat = seatRepository.save(seat);
-        return SeatResult.from(savedSeat);
-    }
-
-    @Transactional
-    public SeatResult releaseSeat(Long seatId) {
-        Seat seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("좌석을 찾을 수 없습니다."));
-        
-        seat.release();
-        Seat savedSeat = seatRepository.save(seat);
-        return SeatResult.from(savedSeat);
+        for (Seat seat : expiredSeats) {
+            seat.release();
+            seatRepository.save(seat);
+        }
     }
 }

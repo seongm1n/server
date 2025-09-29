@@ -6,6 +6,7 @@ import kr.hhplus.be.server.domain.seat.SeatStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,6 +41,14 @@ public class SeatRepositoryImpl implements SeatRepository {
     @Override
     public List<Seat> findAvailableSeatsByConcertScheduleId(Long concertScheduleId) {
         return jpaRepository.findByConcertScheduleIdAndStatus(concertScheduleId, SeatStatus.AVAILABLE)
+                .stream()
+                .map(SeatEntity::toDomain)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<Seat> findExpiredTemporaryReservations(LocalDateTime expirationTime) {
+        return jpaRepository.findByStatusAndReservedAtBefore(SeatStatus.TEMPORARILY_RESERVED, expirationTime)
                 .stream()
                 .map(SeatEntity::toDomain)
                 .collect(Collectors.toList());

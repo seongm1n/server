@@ -86,32 +86,16 @@ class PaymentRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persi
     }
     
     private Long createReservation() {
+        // seat 먼저 생성
         entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO concert (name) VALUES ('테스트 콘서트')")
-                .executeUpdate();
-        
-        Long concertId = (Long) entityManager.getEntityManager()
-                .createNativeQuery("SELECT LAST_INSERT_ID()")
-                .getSingleResult();
-        
-        entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO concert_schedule (concert_id, concert_date, start_time, end_time, total_seats) VALUES (?, '2024-03-01', '19:00:00', '21:00:00', 50)")
-                .setParameter(1, concertId)
-                .executeUpdate();
-        
-        Long scheduleId = (Long) entityManager.getEntityManager()
-                .createNativeQuery("SELECT LAST_INSERT_ID()")
-                .getSingleResult();
-        
-        entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO seat (concert_schedule_id, seat_number, price, status) VALUES (?, 1, 50000, 'AVAILABLE')")
-                .setParameter(1, scheduleId)
+                .createNativeQuery("INSERT INTO seat (concert_schedule_id, seat_number, price, status) VALUES (1, 1, 50000, 'AVAILABLE')")
                 .executeUpdate();
         
         Long seatId = (Long) entityManager.getEntityManager()
                 .createNativeQuery("SELECT LAST_INSERT_ID()")
                 .getSingleResult();
         
+        // reservation 생성
         entityManager.getEntityManager()
                 .createNativeQuery("INSERT INTO reservation (user_id, seat_id, status, reserved_at, expires_at) VALUES ('user1', ?, 'CONFIRMED', NOW(), DATE_ADD(NOW(), INTERVAL 10 MINUTE))")
                 .setParameter(1, seatId)

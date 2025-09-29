@@ -53,4 +53,18 @@ public class ReservationUseCase {
 
         return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
     }
+    
+    public ReservationResult createReservation(String userId, Long seatId, int price) {
+        Reservation reservation = Reservation.create(userId, seatId, price);
+        Reservation savedReservation = reservationRepository.save(reservation);
+        
+        return ReservationResult.from(savedReservation);
+    }
+    
+    public ReservationResult getReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다."));
+        
+        return ReservationResult.from(reservation);
+    }
 }

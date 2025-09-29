@@ -33,6 +33,7 @@ public class QueueUseCase {
                                    queueToken.getStatus().name());
     }
 
+    // 테스트용 메서드 - 실제로는 스케줄러에서 처리
     public void activateWaitingTokens(int maxActiveTokens) {
         Long activeCount = queueTokenRepository.countActiveTokens();
         int slotsAvailable = maxActiveTokens - activeCount.intValue();
