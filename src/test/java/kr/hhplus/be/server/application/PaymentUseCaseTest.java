@@ -7,6 +7,9 @@ import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
 import kr.hhplus.be.server.domain.reservation.*;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import kr.hhplus.be.server.domain.user.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -79,7 +82,7 @@ class PaymentUseCaseTest {
         PaymentResult result = paymentUseCase.pay(userId, reservationId);
 
         assertThat(result.getPaymentId()).isEqualTo(1L);
-        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
         
         verify(userBalanceRepository).save(userBalance);
         verify(reservationRepository).save(reservation);

@@ -5,6 +5,8 @@ import kr.hhplus.be.server.domain.payment.*;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.user.*;
 import org.springframework.stereotype.Service;
 
@@ -65,5 +67,9 @@ public class PaymentUseCase {
         Payment savedPayment = paymentRepository.save(payment);
 
         return new PaymentResult(savedPayment.getId(), savedPayment.getStatus().name());
+    }
+    
+    public PaymentResult processPayment(String userId, Long reservationId) {
+        return pay(userId, reservationId);
     }
 }

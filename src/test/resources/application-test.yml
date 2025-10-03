@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:tc:mysql:8.0:///test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate.timezone.default_storage: NORMALIZE_UTC
+      hibernate.jdbc.time_zone: UTC
+      hibernate.dialect: org.hibernate.dialect.MySQLDialect
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    kr.hhplus.be.server: DEBUG

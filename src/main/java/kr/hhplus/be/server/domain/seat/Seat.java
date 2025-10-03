@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.domain.reservation;
+package kr.hhplus.be.server.domain.seat;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

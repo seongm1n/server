@@ -4,6 +4,9 @@ import kr.hhplus.be.server.application.dto.ReservationResult;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
+import kr.hhplus.be.server.domain.seat.Seat;
+import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.domain.seat.SeatStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,5 +52,19 @@ public class ReservationUseCase {
         Reservation savedReservation = reservationRepository.save(reservation);
 
         return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
+    }
+    
+    public ReservationResult createReservation(String userId, Long seatId, int price) {
+        Reservation reservation = Reservation.create(userId, seatId, price);
+        Reservation savedReservation = reservationRepository.save(reservation);
+        
+        return ReservationResult.from(savedReservation);
+    }
+    
+    public ReservationResult getReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다."));
+        
+        return ReservationResult.from(reservation);
     }
 }
