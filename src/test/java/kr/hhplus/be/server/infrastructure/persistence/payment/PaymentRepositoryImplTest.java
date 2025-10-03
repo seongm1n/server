@@ -97,7 +97,7 @@ class PaymentRepositoryImplTest extends kr.hhplus.be.server.infrastructure.persi
         
         // reservation 생성
         entityManager.getEntityManager()
-                .createNativeQuery("INSERT INTO reservation (user_id, seat_id, status, reserved_at, expires_at) VALUES ('user1', ?, 'CONFIRMED', NOW(), DATE_ADD(NOW(), INTERVAL 10 MINUTE))")
+                .createNativeQuery("INSERT INTO reservation (user_id, seat_id, price, status, created_at) VALUES ('user1', ?, 50000, 'CONFIRMED', NOW())")
                 .setParameter(1, seatId)
                 .executeUpdate();
         

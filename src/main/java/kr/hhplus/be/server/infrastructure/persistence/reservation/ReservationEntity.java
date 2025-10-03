@@ -30,21 +30,20 @@ public class ReservationEntity {
     @Column(name = "status", nullable = false)
     private ReservationStatus status;
     
-    @Column(name = "reserved_at", nullable = false)
-    private LocalDateTime reservedAt;
+    @Column(name = "price", nullable = false)
+    private int price;
     
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
     
     public static ReservationEntity from(Reservation reservation) {
-        LocalDateTime now = LocalDateTime.now();
         return new ReservationEntity(
                 reservation.getId(),
                 reservation.getUserId(),
                 reservation.getSeatId(),
                 reservation.getStatus(),
-                reservation.getCreatedAt() != null ? reservation.getCreatedAt() : now,
-                now.plusMinutes(10) // 10분 후 만료
+                reservation.getPrice(),
+                reservation.getCreatedAt()
         );
     }
     
@@ -53,9 +52,9 @@ public class ReservationEntity {
                 this.id,
                 this.userId,
                 this.seatId,
-                0, // price는 seat에서 조회 필요
+                this.price,
                 this.status,
-                this.reservedAt
+                this.createdAt
         );
     }
     

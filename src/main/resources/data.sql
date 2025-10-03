@@ -1,17 +1,7 @@
 -- 테스트용 초기 데이터
 
--- 콘서트 데이터
-INSERT INTO concert (id, name) VALUES 
-(1, '아이유 콘서트'),
-(2, 'BTS 콘서트');
-
--- 콘서트 스케줄 데이터
-INSERT INTO concert_schedule (id, concert_id, concert_date, start_time, end_time, total_seats) VALUES 
-(1, 1, '2024-03-01', '19:00:00', '21:00:00', 50),
-(2, 1, '2024-03-02', '19:00:00', '21:00:00', 50),
-(3, 2, '2024-03-15', '20:00:00', '22:00:00', 100);
-
 -- 좌석 데이터 (콘서트 스케줄 1번 - 50석)
+-- concert_schedule_id는 외부 시스템에서 관리되는 ID를 참조
 INSERT INTO seat (concert_schedule_id, seat_number, price, status) 
 SELECT 1, seat_num, 50000, 'AVAILABLE'
 FROM (

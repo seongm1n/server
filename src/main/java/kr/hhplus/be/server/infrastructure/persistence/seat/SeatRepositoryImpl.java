@@ -40,7 +40,7 @@ public class SeatRepositoryImpl implements SeatRepository {
     
     @Override
     public List<Seat> findAvailableSeatsByConcertScheduleId(Long concertScheduleId) {
-        return jpaRepository.findByConcertScheduleIdAndStatus(concertScheduleId, SeatStatus.AVAILABLE)
+        return jpaRepository.findByConcertScheduleIdAndStatusOrderBySeatNumber(concertScheduleId, SeatStatus.AVAILABLE)
                 .stream()
                 .map(SeatEntity::toDomain)
                 .collect(Collectors.toList());
