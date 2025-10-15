@@ -13,17 +13,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserBalanceEntity {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId;
-    
+
     @Column(nullable = false)
     private int balance;
-    
+
+    @Version
+    private Long version;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
@@ -32,6 +35,7 @@ public class UserBalanceEntity {
             userBalance.getId(),
             userBalance.getUserId(),
             userBalance.getBalance(),
+            userBalance.getVersion(),
             userBalance.getUpdatedAt()
         );
     }
@@ -41,6 +45,7 @@ public class UserBalanceEntity {
             this.id,
             this.userId,
             this.balance,
+            this.version,
             this.updatedAt
         );
     }
