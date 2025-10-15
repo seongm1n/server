@@ -56,7 +56,8 @@ class ReservationUseCaseTest {
                                   seat.getReservedAt());
         
         when(queueTokenRepository.findActiveByUserId(userId)).thenReturn(Optional.of(queueToken));
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seatWithId));
+        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.of(seatWithId));
+        when(seatRepository.save(any(Seat.class))).thenReturn(seatWithId);
         when(reservationRepository.save(any(Reservation.class)))
             .thenAnswer(invocation -> {
                 Reservation reservation = invocation.getArgument(0);
@@ -85,7 +86,7 @@ class ReservationUseCaseTest {
                 LocalDateTime.now(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(10));
         
         when(queueTokenRepository.findActiveByUserId(userId)).thenReturn(Optional.of(queueToken));
-        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
+        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> reservationUseCase.reserve(userId, seatId))
             .isInstanceOf(IllegalArgumentException.class)
@@ -103,8 +104,8 @@ class ReservationUseCaseTest {
         assertThatThrownBy(() -> reservationUseCase.reserve(userId, seatId))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("활성화된 대기열 토큰이 없습니다.");
-        
-        verify(seatRepository, never()).findById(any());
+
+        verify(seatRepository, never()).findByIdWithLock(any());
     }
 
     @Test
@@ -121,34 +122,33 @@ class ReservationUseCaseTest {
         assertThatThrownBy(() -> reservationUseCase.reserve(userId, seatId))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("대기열 토큰이 만료되었습니다.");
-        
+
         verify(queueTokenRepository).save(expiredToken);
-        verify(seatRepository, never()).findById(any());
+        verify(seatRepository, never()).findByIdWithLock(any());
     }
 
     @Test
     @DisplayName("만료된 선점자의 좌석을 다른 사용자가 예약할 수 있다")
     void canReserveSeatFromExpiredReserver() {
         String currentUser = "user123";
-        String previousReserver = "user456";
         Long seatId = 1L;
-        
+
         QueueToken currentUserToken = new QueueToken(1L, currentUser, "token1", 1, QueueStatus.ACTIVE,
                 LocalDateTime.now(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(10));
-        QueueToken expiredReserverToken = new QueueToken(2L, previousReserver, "token2", 2, QueueStatus.ACTIVE,
-                LocalDateTime.now(), LocalDateTime.now(), LocalDateTime.now().minusMinutes(1)); // 만료됨
-        
-        Seat temporarilyReservedSeat = new Seat(1L, 1L, 1, 50000, SeatStatus.TEMPORARILY_RESERVED, 
-                                               previousReserver, LocalDateTime.now());
-        
+
+        Seat availableSeat = Seat.create(1L, 1, 50000);
+        Seat seatWithId = new Seat(1L, availableSeat.getConcertScheduleId(), availableSeat.getSeatNumber(),
+                                  availableSeat.getPrice(), availableSeat.getStatus(),
+                                  availableSeat.getReservedBy(), availableSeat.getReservedAt());
+
         when(queueTokenRepository.findActiveByUserId(currentUser)).thenReturn(Optional.of(currentUserToken));
-        when(queueTokenRepository.findActiveByUserId(previousReserver)).thenReturn(Optional.of(expiredReserverToken));
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(temporarilyReservedSeat));
+        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.of(seatWithId));
+        when(seatRepository.save(any(Seat.class))).thenReturn(seatWithId);
         when(reservationRepository.save(any(Reservation.class)))
             .thenAnswer(invocation -> {
                 Reservation reservation = invocation.getArgument(0);
-                return new Reservation(1L, reservation.getUserId(), reservation.getSeatId(), 
-                                     reservation.getPrice(), reservation.getStatus(), 
+                return new Reservation(1L, reservation.getUserId(), reservation.getSeatId(),
+                                     reservation.getPrice(), reservation.getStatus(),
                                      reservation.getCreatedAt());
             });
 
@@ -156,8 +156,7 @@ class ReservationUseCaseTest {
 
         assertThat(result.getReservationId()).isEqualTo(1L);
         assertThat(result.getPrice()).isEqualTo(50000);
-        
-        verify(queueTokenRepository).save(expiredReserverToken);
+
         verify(seatRepository).save(any(Seat.class));
         verify(reservationRepository).save(any(Reservation.class));
     }
