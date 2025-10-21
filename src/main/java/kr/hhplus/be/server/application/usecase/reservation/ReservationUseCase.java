@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class ReservationUseCase {
     private final SeatRepository seatRepository;
     private final ReservationRepository reservationRepository;
@@ -22,6 +21,7 @@ public class ReservationUseCase {
         this.queueTokenRepository = queueTokenRepository;
     }
 
+    @Transactional
     public ReservationResult reserve(String userId, Long seatId) {
         QueueToken queueToken = queueTokenRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("활성화된 대기열 토큰이 없습니다."));
@@ -44,6 +44,7 @@ public class ReservationUseCase {
         return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
     }
     
+    @Transactional
     public ReservationResult createReservation(String userId, Long seatId, int price) {
         Reservation reservation = Reservation.create(userId, seatId, price);
         Reservation savedReservation = reservationRepository.save(reservation);
