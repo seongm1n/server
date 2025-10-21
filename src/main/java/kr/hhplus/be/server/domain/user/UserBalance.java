@@ -11,10 +11,11 @@ public class UserBalance {
     private Long id;
     private String userId;
     private int balance;
+    private Long version;
     private LocalDateTime updatedAt;
 
     public static UserBalance create(String userId, int initialBalance) {
-        return new UserBalance(null, userId, initialBalance, LocalDateTime.now());
+        return new UserBalance(null, userId, initialBalance, null, LocalDateTime.now());
     }
 
     public void charge(int amount) {

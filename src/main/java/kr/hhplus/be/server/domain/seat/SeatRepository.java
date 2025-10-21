@@ -6,7 +6,9 @@ import java.util.Optional;
 
 public interface SeatRepository {
     Optional<Seat> findById(Long id);
+    Optional<Seat> findByIdWithLock(Long id);
     Seat save(Seat seat);
     List<Seat> findAvailableSeatsByConcertScheduleId(Long concertScheduleId);
     List<Seat> findExpiredTemporaryReservations(LocalDateTime expirationTime);
+    List<Seat> findExpiredWithLock(LocalDateTime expirationTime);
 }

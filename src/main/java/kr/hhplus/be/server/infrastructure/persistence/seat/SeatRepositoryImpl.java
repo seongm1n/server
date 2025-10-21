@@ -53,4 +53,18 @@ public class SeatRepositoryImpl implements SeatRepository {
                 .map(SeatEntity::toDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Optional<Seat> findByIdWithLock(Long id) {
+        return jpaRepository.findByIdWithLock(id)
+                .map(SeatEntity::toDomain);
+    }
+
+    @Override
+    public List<Seat> findExpiredWithLock(LocalDateTime expirationTime) {
+        return jpaRepository.findExpiredWithLock(SeatStatus.TEMPORARILY_RESERVED, expirationTime)
+                .stream()
+                .map(SeatEntity::toDomain)
+                .collect(Collectors.toList());
+    }
 }

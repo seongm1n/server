@@ -6,8 +6,8 @@ import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ReservationUseCase {
@@ -21,6 +21,7 @@ public class ReservationUseCase {
         this.queueTokenRepository = queueTokenRepository;
     }
 
+    @Transactional
     public ReservationResult reserve(String userId, Long seatId) {
         QueueToken queueToken = queueTokenRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("활성화된 대기열 토큰이 없습니다."));
@@ -31,19 +32,8 @@ public class ReservationUseCase {
             throw new IllegalStateException("대기열 토큰이 만료되었습니다.");
         }
 
-        Seat seat = seatRepository.findById(seatId)
+        Seat seat = seatRepository.findByIdWithLock(seatId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
-
-        if (seat.getStatus() == SeatStatus.TEMPORARILY_RESERVED && seat.getReservedBy() != null) {
-            QueueToken reserverToken = queueTokenRepository.findActiveByUserId(seat.getReservedBy()).orElse(null);
-            if (reserverToken == null || reserverToken.isExpired()) {
-                seat.release();
-                if (reserverToken != null && reserverToken.isExpired()) {
-                    reserverToken.expire();
-                    queueTokenRepository.save(reserverToken);
-                }
-            }
-        }
 
         seat.reserve(userId);
         seatRepository.save(seat);
@@ -54,6 +44,7 @@ public class ReservationUseCase {
         return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
     }
     
+    @Transactional
     public ReservationResult createReservation(String userId, Long seatId, int price) {
         Reservation reservation = Reservation.create(userId, seatId, price);
         Reservation savedReservation = reservationRepository.save(reservation);
