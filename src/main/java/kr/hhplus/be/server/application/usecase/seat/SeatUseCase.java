@@ -4,6 +4,8 @@ import kr.hhplus.be.server.application.dto.SeatResult;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,15 +16,20 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SeatUseCase {
-    
+
     private final SeatRepository seatRepository;
 
+    @Cacheable(value = "seats", key = "#concertScheduleId")
     @Transactional(readOnly = true)
     public List<SeatResult> getAvailableSeats(Long concertScheduleId) {
         List<Seat> seats = seatRepository.findAvailableSeatsByConcertScheduleId(concertScheduleId);
         return seats.stream()
                 .map(SeatResult::from)
                 .collect(Collectors.toList());
+    }
+
+    @CacheEvict(value = "seats", key = "#concertScheduleId")
+    public void evictSeatCache(Long concertScheduleId) {
     }
 
     // 이 메서드들은 ReservationUseCase와 PaymentUseCase에서 직접 처리함
