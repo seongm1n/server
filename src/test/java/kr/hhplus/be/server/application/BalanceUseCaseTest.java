@@ -3,6 +3,7 @@ package kr.hhplus.be.server.application;
 import kr.hhplus.be.server.application.dto.BalanceResult;
 import kr.hhplus.be.server.application.usecase.balance.BalanceUseCase;
 import kr.hhplus.be.server.domain.user.*;
+import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -21,12 +23,16 @@ class BalanceUseCaseTest {
     @Mock
     private UserBalanceRepository userBalanceRepository;
 
+    @Mock
+    private DistributedLock distributedLock;
+
     private BalanceUseCase balanceUseCase;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        balanceUseCase = new BalanceUseCase(userBalanceRepository);
+        when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        balanceUseCase = new BalanceUseCase(userBalanceRepository, distributedLock);
     }
 
     @Test

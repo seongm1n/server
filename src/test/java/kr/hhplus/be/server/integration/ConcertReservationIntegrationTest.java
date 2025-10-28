@@ -7,7 +7,6 @@ import kr.hhplus.be.server.application.usecase.queue.QueueUseCase;
 import kr.hhplus.be.server.application.usecase.reservation.ReservationUseCase;
 import kr.hhplus.be.server.application.usecase.seat.SeatUseCase;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
-import kr.hhplus.be.server.domain.seat.SeatStatus;
 import kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

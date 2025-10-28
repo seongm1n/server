@@ -11,6 +11,7 @@ import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.seat.SeatStatus;
 import kr.hhplus.be.server.domain.user.*;
+import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
-
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,26 +31,30 @@ class PaymentUseCaseTest {
 
     @Mock
     private PaymentRepository paymentRepository;
-    
+
     @Mock
     private ReservationRepository reservationRepository;
-    
+
     @Mock
     private UserBalanceRepository userBalanceRepository;
-    
+
     @Mock
     private SeatRepository seatRepository;
-    
+
     @Mock
     private QueueTokenRepository queueTokenRepository;
+
+    @Mock
+    private DistributedLock distributedLock;
 
     private PaymentUseCase paymentUseCase;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        paymentUseCase = new PaymentUseCase(paymentRepository, reservationRepository, 
-                                          userBalanceRepository, seatRepository, queueTokenRepository);
+        when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        paymentUseCase = new PaymentUseCase(paymentRepository, reservationRepository,
+                                          userBalanceRepository, seatRepository, queueTokenRepository, distributedLock);
     }
 
     @Test

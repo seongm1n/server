@@ -2,6 +2,7 @@ package kr.hhplus.be.server.application;
 
 import kr.hhplus.be.server.application.dto.ReservationResult;
 import kr.hhplus.be.server.application.usecase.reservation.ReservationUseCase;
+import kr.hhplus.be.server.application.usecase.seat.SeatUseCase;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
@@ -9,6 +10,7 @@ import kr.hhplus.be.server.domain.reservation.*;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,19 +30,26 @@ class ReservationUseCaseTest {
 
     @Mock
     private SeatRepository seatRepository;
-    
+
     @Mock
     private ReservationRepository reservationRepository;
-    
+
     @Mock
     private QueueTokenRepository queueTokenRepository;
+
+    @Mock
+    private DistributedLock distributedLock;
+
+    @Mock
+    private SeatUseCase seatUseCase;
 
     private ReservationUseCase reservationUseCase;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        reservationUseCase = new ReservationUseCase(seatRepository, reservationRepository, queueTokenRepository);
+        when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        reservationUseCase = new ReservationUseCase(seatRepository, reservationRepository, queueTokenRepository, distributedLock, seatUseCase);
     }
 
     @Test
@@ -56,7 +66,7 @@ class ReservationUseCaseTest {
                                   seat.getReservedAt());
         
         when(queueTokenRepository.findActiveByUserId(userId)).thenReturn(Optional.of(queueToken));
-        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.of(seatWithId));
+        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seatWithId));
         when(seatRepository.save(any(Seat.class))).thenReturn(seatWithId);
         when(reservationRepository.save(any(Reservation.class)))
             .thenAnswer(invocation -> {
@@ -86,7 +96,7 @@ class ReservationUseCaseTest {
                 LocalDateTime.now(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(10));
         
         when(queueTokenRepository.findActiveByUserId(userId)).thenReturn(Optional.of(queueToken));
-        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.empty());
+        when(seatRepository.findById(seatId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> reservationUseCase.reserve(userId, seatId))
             .isInstanceOf(IllegalArgumentException.class)
@@ -105,7 +115,7 @@ class ReservationUseCaseTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("활성화된 대기열 토큰이 없습니다.");
 
-        verify(seatRepository, never()).findByIdWithLock(any());
+        verify(seatRepository, never()).findById(any());
     }
 
     @Test
@@ -124,7 +134,7 @@ class ReservationUseCaseTest {
             .hasMessage("대기열 토큰이 만료되었습니다.");
 
         verify(queueTokenRepository).save(expiredToken);
-        verify(seatRepository, never()).findByIdWithLock(any());
+        verify(seatRepository, never()).findById(any());
     }
 
     @Test
@@ -142,7 +152,7 @@ class ReservationUseCaseTest {
                                   availableSeat.getReservedBy(), availableSeat.getReservedAt());
 
         when(queueTokenRepository.findActiveByUserId(currentUser)).thenReturn(Optional.of(currentUserToken));
-        when(seatRepository.findByIdWithLock(seatId)).thenReturn(Optional.of(seatWithId));
+        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seatWithId));
         when(seatRepository.save(any(Seat.class))).thenReturn(seatWithId);
         when(reservationRepository.save(any(Reservation.class)))
             .thenAnswer(invocation -> {
