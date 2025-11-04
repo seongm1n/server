@@ -7,6 +7,7 @@ import kr.hhplus.be.server.domain.queue.QueueStatus;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class SeatReservationConcurrencyTest {
+class SeatReservationConcurrencyTest extends TestContainerConfig {
 
     @Autowired
     private ReservationUseCase reservationUseCase;

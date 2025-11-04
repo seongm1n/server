@@ -4,6 +4,7 @@ import kr.hhplus.be.server.application.scheduler.SeatScheduler;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.seat.SeatStatus;
+import kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class SchedulerConcurrencyTest {
+class SchedulerConcurrencyTest extends TestContainerConfig {
 
     @Autowired
     private SeatScheduler seatScheduler;

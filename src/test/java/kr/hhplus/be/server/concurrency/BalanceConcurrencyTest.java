@@ -3,6 +3,7 @@ package kr.hhplus.be.server.concurrency;
 import kr.hhplus.be.server.application.usecase.balance.BalanceUseCase;
 import kr.hhplus.be.server.domain.user.UserBalance;
 import kr.hhplus.be.server.domain.user.UserBalanceRepository;
+import kr.hhplus.be.server.infrastructure.persistence.TestContainerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class BalanceConcurrencyTest {
+class BalanceConcurrencyTest extends TestContainerConfig {
 
     @Autowired
     private BalanceUseCase balanceUseCase;

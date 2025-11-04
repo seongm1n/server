@@ -40,6 +40,9 @@ dependencies {
     // DB
 	runtimeOnly("com.mysql:mysql-connector-j")
 
+	// Redis
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testCompileOnly("org.projectlombok:lombok")
@@ -51,6 +54,11 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mysql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testRuntimeOnly("com.h2database:h2")
+	testImplementation("org.testcontainers:testcontainers")
+	testImplementation("it.ozimov:embedded-redis:0.7.3") {
+		exclude(group = "org.slf4j", module = "slf4j-simple")
+	}
 }
 
 tasks.withType<Test> {

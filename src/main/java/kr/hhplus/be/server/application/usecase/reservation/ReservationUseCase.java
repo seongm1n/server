@@ -1,47 +1,69 @@
 package kr.hhplus.be.server.application.usecase.reservation;
 
 import kr.hhplus.be.server.application.dto.ReservationResult;
+import kr.hhplus.be.server.application.event.SeatReservedEvent;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
+import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ReservationUseCase {
     private final SeatRepository seatRepository;
     private final ReservationRepository reservationRepository;
     private final QueueTokenRepository queueTokenRepository;
+    private final DistributedLock distributedLock;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ReservationUseCase(SeatRepository seatRepository, ReservationRepository reservationRepository, QueueTokenRepository queueTokenRepository) {
+    public ReservationUseCase(SeatRepository seatRepository, ReservationRepository reservationRepository, QueueTokenRepository queueTokenRepository, DistributedLock distributedLock, ApplicationEventPublisher eventPublisher) {
         this.seatRepository = seatRepository;
         this.reservationRepository = reservationRepository;
         this.queueTokenRepository = queueTokenRepository;
+        this.distributedLock = distributedLock;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public ReservationResult reserve(String userId, Long seatId) {
-        QueueToken queueToken = queueTokenRepository.findActiveByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("활성화된 대기열 토큰이 없습니다."));
+        String lockKey = "seat:reserve:" + seatId;
 
-        if (queueToken.isExpired()) {
-            queueToken.expire();
-            queueTokenRepository.save(queueToken);
-            throw new IllegalStateException("대기열 토큰이 만료되었습니다.");
+        boolean lockAcquired = distributedLock.tryLockWithRetry(lockKey, 5, TimeUnit.SECONDS, 3, 100);
+        if (!lockAcquired) {
+            throw new IllegalStateException("좌석 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
 
-        Seat seat = seatRepository.findByIdWithLock(seatId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
+        try {
+            QueueToken queueToken = queueTokenRepository.findActiveByUserId(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("활성화된 대기열 토큰이 없습니다."));
 
-        seat.reserve(userId);
-        seatRepository.save(seat);
+            if (queueToken.isExpired()) {
+                queueToken.expire();
+                queueTokenRepository.save(queueToken);
+                throw new IllegalStateException("대기열 토큰이 만료되었습니다.");
+            }
 
-        Reservation reservation = Reservation.create(userId, seatId, seat.getPrice());
-        Reservation savedReservation = reservationRepository.save(reservation);
+            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
 
-        return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
+            seat.reserve(userId);
+            seatRepository.save(seat);
+
+            Reservation reservation = Reservation.create(userId, seatId, seat.getPrice());
+            Reservation savedReservation = reservationRepository.save(reservation);
+
+            eventPublisher.publishEvent(new SeatReservedEvent(seat.getConcertScheduleId()));
+
+            return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
+        } finally {
+            distributedLock.unlock(lockKey);
+        }
     }
     
     @Transactional
@@ -55,7 +77,7 @@ public class ReservationUseCase {
     public ReservationResult getReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다."));
-        
+
         return ReservationResult.from(reservation);
     }
 }
