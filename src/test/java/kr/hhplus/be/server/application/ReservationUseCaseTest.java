@@ -2,7 +2,6 @@ package kr.hhplus.be.server.application;
 
 import kr.hhplus.be.server.application.dto.ReservationResult;
 import kr.hhplus.be.server.application.usecase.reservation.ReservationUseCase;
-import kr.hhplus.be.server.application.usecase.seat.SeatUseCase;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.queue.QueueStatus;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -41,7 +41,7 @@ class ReservationUseCaseTest {
     private DistributedLock distributedLock;
 
     @Mock
-    private SeatUseCase seatUseCase;
+    private ApplicationEventPublisher eventPublisher;
 
     private ReservationUseCase reservationUseCase;
 
@@ -49,7 +49,8 @@ class ReservationUseCaseTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
-        reservationUseCase = new ReservationUseCase(seatRepository, reservationRepository, queueTokenRepository, distributedLock, seatUseCase);
+        when(distributedLock.tryLockWithRetry(anyString(), anyLong(), any(TimeUnit.class), anyInt(), anyLong())).thenReturn(true);
+        reservationUseCase = new ReservationUseCase(seatRepository, reservationRepository, queueTokenRepository, distributedLock, eventPublisher);
     }
 
     @Test

@@ -1,13 +1,14 @@
 package kr.hhplus.be.server.application.usecase.reservation;
 
 import kr.hhplus.be.server.application.dto.ReservationResult;
-import kr.hhplus.be.server.application.usecase.seat.SeatUseCase;
+import kr.hhplus.be.server.application.event.SeatReservedEvent;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
 import kr.hhplus.be.server.domain.reservation.*;
 import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,21 +20,21 @@ public class ReservationUseCase {
     private final ReservationRepository reservationRepository;
     private final QueueTokenRepository queueTokenRepository;
     private final DistributedLock distributedLock;
-    private final SeatUseCase seatUseCase;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ReservationUseCase(SeatRepository seatRepository, ReservationRepository reservationRepository, QueueTokenRepository queueTokenRepository, DistributedLock distributedLock, SeatUseCase seatUseCase) {
+    public ReservationUseCase(SeatRepository seatRepository, ReservationRepository reservationRepository, QueueTokenRepository queueTokenRepository, DistributedLock distributedLock, ApplicationEventPublisher eventPublisher) {
         this.seatRepository = seatRepository;
         this.reservationRepository = reservationRepository;
         this.queueTokenRepository = queueTokenRepository;
         this.distributedLock = distributedLock;
-        this.seatUseCase = seatUseCase;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public ReservationResult reserve(String userId, Long seatId) {
         String lockKey = "seat:reserve:" + seatId;
 
-        boolean lockAcquired = tryLockWithRetry(lockKey, 3, 100);
+        boolean lockAcquired = distributedLock.tryLockWithRetry(lockKey, 5, TimeUnit.SECONDS, 3, 100);
         if (!lockAcquired) {
             throw new IllegalStateException("좌석 예약 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
@@ -54,10 +55,10 @@ public class ReservationUseCase {
             seat.reserve(userId);
             seatRepository.save(seat);
 
-            seatUseCase.evictSeatCache(seat.getConcertScheduleId());
-
             Reservation reservation = Reservation.create(userId, seatId, seat.getPrice());
             Reservation savedReservation = reservationRepository.save(reservation);
+
+            eventPublisher.publishEvent(new SeatReservedEvent(seat.getConcertScheduleId()));
 
             return new ReservationResult(savedReservation.getId(), savedReservation.getPrice(), queueToken.getExpiresAt());
         } finally {
@@ -78,23 +79,5 @@ public class ReservationUseCase {
                 .orElseThrow(() -> new IllegalArgumentException("예약을 찾을 수 없습니다."));
 
         return ReservationResult.from(reservation);
-    }
-
-    private boolean tryLockWithRetry(String lockKey, int maxRetries, long delayMillis) {
-        for (int i = 0; i < maxRetries; i++) {
-            if (distributedLock.tryLock(lockKey, 5, TimeUnit.SECONDS)) {
-                return true;
-            }
-
-            if (i < maxRetries - 1) {
-                try {
-                    Thread.sleep(delayMillis);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return false;
-                }
-            }
-        }
-        return false;
     }
 }

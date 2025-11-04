@@ -25,7 +25,7 @@ public class BalanceUseCase {
     public BalanceResult charge(String userId, int amount) {
         String lockKey = "balance:charge:" + userId;
 
-        boolean lockAcquired = tryLockWithRetry(lockKey, 3, 100);
+        boolean lockAcquired = distributedLock.tryLockWithRetry(lockKey, 5, TimeUnit.SECONDS, 3, 100);
         if (!lockAcquired) {
             throw new IllegalStateException("잔액 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
@@ -47,7 +47,7 @@ public class BalanceUseCase {
     public BalanceResult use(String userId, int amount) {
         String lockKey = "balance:use:" + userId;
 
-        boolean lockAcquired = tryLockWithRetry(lockKey, 3, 100);
+        boolean lockAcquired = distributedLock.tryLockWithRetry(lockKey, 5, TimeUnit.SECONDS, 3, 100);
         if (!lockAcquired) {
             throw new IllegalStateException("잔액 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
@@ -71,23 +71,5 @@ public class BalanceUseCase {
                 .orElse(UserBalance.create(userId, 0));
 
         return new BalanceResult(userBalance.getBalance());
-    }
-
-    private boolean tryLockWithRetry(String lockKey, int maxRetries, long delayMillis) {
-        for (int i = 0; i < maxRetries; i++) {
-            if (distributedLock.tryLock(lockKey, 5, TimeUnit.SECONDS)) {
-                return true;
-            }
-
-            if (i < maxRetries - 1) {
-                try {
-                    Thread.sleep(delayMillis);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return false;
-                }
-            }
-        }
-        return false;
     }
 }

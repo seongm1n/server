@@ -40,7 +40,7 @@ public class PaymentUseCase {
     public PaymentResult pay(String userId, Long reservationId) {
         String paymentLockKey = "payment:process:" + userId + ":" + reservationId;
 
-        boolean lockAcquired = tryLockWithRetry(paymentLockKey, 3, 100);
+        boolean lockAcquired = distributedLock.tryLockWithRetry(paymentLockKey, 10, TimeUnit.SECONDS, 3, 100);
         if (!lockAcquired) {
             throw new IllegalStateException("결제 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
@@ -71,7 +71,7 @@ public class PaymentUseCase {
         }
 
         String balanceLockKey = "balance:use:" + userId;
-        boolean balanceLockAcquired = tryLockWithRetry(balanceLockKey, 3, 100);
+        boolean balanceLockAcquired = distributedLock.tryLockWithRetry(balanceLockKey, 10, TimeUnit.SECONDS, 3, 100);
         if (!balanceLockAcquired) {
             throw new IllegalStateException("잔액 처리 중입니다. 잠시 후 다시 시도해주세요.");
         }
@@ -103,23 +103,5 @@ public class PaymentUseCase {
     
     public PaymentResult processPayment(String userId, Long reservationId) {
         return pay(userId, reservationId);
-    }
-
-    private boolean tryLockWithRetry(String lockKey, int maxRetries, long delayMillis) {
-        for (int i = 0; i < maxRetries; i++) {
-            if (distributedLock.tryLock(lockKey, 10, TimeUnit.SECONDS)) {
-                return true;
-            }
-
-            if (i < maxRetries - 1) {
-                try {
-                    Thread.sleep(delayMillis);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return false;
-                }
-            }
-        }
-        return false;
     }
 }

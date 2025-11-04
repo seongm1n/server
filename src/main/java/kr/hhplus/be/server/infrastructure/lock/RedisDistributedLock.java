@@ -3,7 +3,6 @@ package kr.hhplus.be.server.infrastructure.lock;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -18,10 +17,9 @@ public class RedisDistributedLock implements DistributedLock {
     @Override
     public boolean tryLock(String key, long timeout, TimeUnit unit) {
         String lockKey = LOCK_PREFIX + key;
-        String lockValue = UUID.randomUUID().toString();
 
         Boolean acquired = redisTemplate.opsForValue()
-                .setIfAbsent(lockKey, lockValue, timeout, unit);
+                .setIfAbsent(lockKey, "1", timeout, unit);
 
         return Boolean.TRUE.equals(acquired);
     }

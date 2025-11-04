@@ -53,6 +53,7 @@ class PaymentUseCaseTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(distributedLock.tryLockWithRetry(anyString(), anyLong(), any(TimeUnit.class), anyInt(), anyLong())).thenReturn(true);
         paymentUseCase = new PaymentUseCase(paymentRepository, reservationRepository,
                                           userBalanceRepository, seatRepository, queueTokenRepository, distributedLock);
     }
