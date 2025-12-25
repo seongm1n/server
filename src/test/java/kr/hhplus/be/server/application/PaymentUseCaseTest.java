@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.application;
 
 import kr.hhplus.be.server.application.dto.PaymentResult;
+import kr.hhplus.be.server.application.event.PaymentCompletedEvent;
+import kr.hhplus.be.server.application.event.ReservationCompletedEvent;
 import kr.hhplus.be.server.application.usecase.payment.PaymentUseCase;
 import kr.hhplus.be.server.domain.payment.*;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
@@ -15,8 +17,10 @@ import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -47,6 +51,9 @@ class PaymentUseCaseTest {
     @Mock
     private DistributedLock distributedLock;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private PaymentUseCase paymentUseCase;
 
     @BeforeEach
@@ -55,7 +62,7 @@ class PaymentUseCaseTest {
         when(distributedLock.tryLock(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
         when(distributedLock.tryLockWithRetry(anyString(), anyLong(), any(TimeUnit.class), anyInt(), anyLong())).thenReturn(true);
         paymentUseCase = new PaymentUseCase(paymentRepository, reservationRepository,
-                                          userBalanceRepository, seatRepository, queueTokenRepository, distributedLock);
+                                          userBalanceRepository, seatRepository, queueTokenRepository, distributedLock, eventPublisher);
     }
 
     @Test
@@ -89,15 +96,33 @@ class PaymentUseCaseTest {
 
         assertThat(result.getPaymentId()).isEqualTo(1L);
         assertThat(result.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
-        
+
         verify(userBalanceRepository).save(userBalance);
         verify(reservationRepository).save(reservation);
         verify(seatRepository).save(seat);
         verify(paymentRepository).save(any(Payment.class));
-        
+
         assertThat(userBalance.getBalance()).isEqualTo(50000);
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(seat.getStatus()).isEqualTo(SeatStatus.CONFIRMED);
+
+        ArgumentCaptor<ReservationCompletedEvent> reservationEventCaptor = ArgumentCaptor.forClass(ReservationCompletedEvent.class);
+        ArgumentCaptor<PaymentCompletedEvent> paymentEventCaptor = ArgumentCaptor.forClass(PaymentCompletedEvent.class);
+
+        verify(eventPublisher).publishEvent(reservationEventCaptor.capture());
+        verify(eventPublisher).publishEvent(paymentEventCaptor.capture());
+
+        ReservationCompletedEvent reservationEvent = reservationEventCaptor.getValue();
+        assertThat(reservationEvent.getReservationId()).isEqualTo(reservationId);
+        assertThat(reservationEvent.getUserId()).isEqualTo(userId);
+        assertThat(reservationEvent.getSeatId()).isEqualTo(1L);
+        assertThat(reservationEvent.getPrice()).isEqualTo(price);
+
+        PaymentCompletedEvent paymentEvent = paymentEventCaptor.getValue();
+        assertThat(paymentEvent.getPaymentId()).isEqualTo(1L);
+        assertThat(paymentEvent.getUserId()).isEqualTo(userId);
+        assertThat(paymentEvent.getReservationId()).isEqualTo(reservationId);
+        assertThat(paymentEvent.getAmount()).isEqualTo(price);
     }
 
     @Test
