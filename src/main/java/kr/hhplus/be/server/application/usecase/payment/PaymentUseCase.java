@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.application.usecase.payment;
 
 import kr.hhplus.be.server.application.dto.PaymentResult;
+import kr.hhplus.be.server.application.event.PaymentCompletedEvent;
+import kr.hhplus.be.server.application.event.ReservationCompletedEvent;
 import kr.hhplus.be.server.domain.payment.*;
 import kr.hhplus.be.server.domain.queue.QueueTokenRepository;
 import kr.hhplus.be.server.domain.queue.QueueToken;
@@ -9,6 +11,7 @@ import kr.hhplus.be.server.domain.seat.Seat;
 import kr.hhplus.be.server.domain.seat.SeatRepository;
 import kr.hhplus.be.server.domain.user.*;
 import kr.hhplus.be.server.infrastructure.lock.DistributedLock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,19 +25,22 @@ public class PaymentUseCase {
     private final SeatRepository seatRepository;
     private final QueueTokenRepository queueTokenRepository;
     private final DistributedLock distributedLock;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PaymentUseCase(PaymentRepository paymentRepository,
                          ReservationRepository reservationRepository,
                          UserBalanceRepository userBalanceRepository,
                          SeatRepository seatRepository,
                          QueueTokenRepository queueTokenRepository,
-                         DistributedLock distributedLock) {
+                         DistributedLock distributedLock,
+                         ApplicationEventPublisher eventPublisher) {
         this.paymentRepository = paymentRepository;
         this.reservationRepository = reservationRepository;
         this.userBalanceRepository = userBalanceRepository;
         this.seatRepository = seatRepository;
         this.queueTokenRepository = queueTokenRepository;
         this.distributedLock = distributedLock;
+        this.eventPublisher = eventPublisher;
     }
 
     public PaymentResult pay(String userId, Long reservationId) {
@@ -89,6 +95,13 @@ public class PaymentUseCase {
         reservation.confirm();
         reservationRepository.save(reservation);
 
+        eventPublisher.publishEvent(new ReservationCompletedEvent(
+                reservation.getId(),
+                userId,
+                reservation.getSeatId(),
+                reservation.getPrice()
+        ));
+
         Seat seat = seatRepository.findById(reservation.getSeatId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
         seat.confirm();
@@ -97,6 +110,13 @@ public class PaymentUseCase {
         Payment payment = Payment.create(userId, reservationId, reservation.getPrice());
         payment.complete();
         Payment savedPayment = paymentRepository.save(payment);
+
+        eventPublisher.publishEvent(new PaymentCompletedEvent(
+                savedPayment.getId(),
+                userId,
+                reservationId,
+                reservation.getPrice()
+        ));
 
         return new PaymentResult(savedPayment.getId(), savedPayment.getStatus().name());
     }
